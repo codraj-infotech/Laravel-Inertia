@@ -76,10 +76,12 @@
       <!-- Header -->
       <a-layout-header class="header">
         <div class="header-left">
+          <!-- Hamburger Menu Button -->
           <a-button
             type="text"
             class="trigger"
             @click="toggleCollapsed"
+            :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
           >
             <MenuUnfoldOutlined v-if="collapsed" />
             <MenuFoldOutlined v-else />
@@ -370,14 +372,19 @@ const logout = () => {
 }
 
 .trigger {
-  font-size: 18px;
-  padding: 0 24px;
+  font-size: 20px;
+  padding: 8px 16px;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
 .trigger:hover {
   color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .header-right {
@@ -477,7 +484,7 @@ const logout = () => {
   }
 
   .trigger {
-    padding: 0 12px;
+    padding: 8px 12px;
   }
 
   .header {
