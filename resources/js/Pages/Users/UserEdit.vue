@@ -144,8 +144,8 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
+import { userApi } from '@/services/api';
 import {
   UserOutlined,
   MailOutlined,
@@ -239,25 +239,26 @@ const handleSubmit = async () => {
       date_of_birth: formState.date_of_birth ? dayjs(formState.date_of_birth).format('YYYY-MM-DD') : null,
     };
 
-    router.put(`/users/${props.user.id}`, data, {
-      preserveState: true,
-      preserveScroll: true,
-      onSuccess: () => {
-        message.success('User updated successfully!');
-        open.value = false;
-        emit('success');
-      },
-      onError: (errors) => {
-        Object.keys(errors).forEach(key => {
-          message.error(errors[key]);
-        });
-      },
-      onFinish: () => {
-        loading.value = false;
-      },
-    });
+    // Use API instead of Inertia router
+    await userApi.update(props.user.id, data);
+
+    message.success('User updated successfully!');
+    open.value = false;
+    emit('success');
   } catch (error) {
-    console.log('Validation failed:', error);
+    console.error('Error updating user:', error);
+    if (error.response?.data?.errors) {
+      // Handle Laravel validation errors
+      Object.keys(error.response.data.errors).forEach(key => {
+        message.error(error.response.data.errors[key][0]);
+      });
+    } else if (error.response?.data?.message) {
+      message.error(error.response.data.message);
+    } else {
+      message.error('Failed to update user');
+    }
+  } finally {
+    loading.value = false;
   }
 };
 

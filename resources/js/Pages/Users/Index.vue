@@ -39,7 +39,7 @@
         <!-- Users Table -->
         <a-table
           :columns="columns"
-          :data-source="users.data"
+          :data-source="usersData.data"
           :pagination="paginationConfig"
           :loading="loading"
           @change="handleTableChange"
@@ -142,11 +142,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UserCreate from './UserCreate.vue';
 import UserEdit from './UserEdit.vue';
+import { userApi } from '@/services/api';
 import {
   HomeOutlined,
   PlusOutlined,
@@ -159,9 +160,14 @@ import {
 import { message } from 'ant-design-vue';
 
 const page = usePage();
-const props = defineProps({
-  users: Object,
-  filters: Object,
+
+// Local state for users data
+const usersData = ref({
+  data: [],
+  current_page: 1,
+  per_page: 10,
+  total: 0,
+  last_page: 1,
 });
 
 const getUserInitials = (name) => {
@@ -233,37 +239,62 @@ const columns = [
 ];
 
 // Search with debounce
-const searchText = ref(props.filters?.search || '');
+const searchText = ref('');
 const loading = ref(false);
+const sortField = ref('created_at');
+const sortOrder = ref('desc');
 let searchTimeout = null;
 
 // Watch for search text changes and debounce
 watch(searchText, (newValue) => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    performSearch();
+    fetchUsers();
   }, 500); // 500ms debounce
 });
 
-const performSearch = () => {
-  router.get('/users', {
-    search: searchText.value,
-    page: 1,
-    sort_field: props.filters?.sort_field,
-    sort_order: props.filters?.sort_order,
-  }, {
-    preserveState: true,
-    preserveScroll: true,
-    onStart: () => loading.value = true,
-    onFinish: () => loading.value = false,
-  });
+// Fetch users from API
+const fetchUsers = async () => {
+  loading.value = true;
+  try {
+    const params = {
+      page: usersData.value.current_page,
+      limit: usersData.value.per_page,
+    };
+
+    // Add search filter
+    if (searchText.value) {
+      params.filter = `name:${searchText.value},email:${searchText.value},phone:${searchText.value}`;
+    }
+
+    // Add sorting
+    if (sortField.value) {
+      params.sort = sortOrder.value === 'asc' ? sortField.value : `-${sortField.value}`;
+    }
+
+    const response = await userApi.getAll(params);
+
+    // Update users data from API response
+    usersData.value = {
+      data: response.data.data || [],
+      current_page: response.data.meta?.current_page || 1,
+      per_page: response.data.meta?.per_page || 10,
+      total: response.data.meta?.total || 0,
+      last_page: response.data.meta?.last_page || 1,
+    };
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    message.error('Failed to fetch users');
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Pagination
 const paginationConfig = computed(() => ({
-  current: props.users.current_page,
-  pageSize: props.users.per_page,
-  total: props.users.total,
+  current: usersData.value.current_page,
+  pageSize: usersData.value.per_page,
+  total: usersData.value.total,
   showSizeChanger: true,
   showQuickJumper: true,
   showTotal: (total) => `Total ${total} users`,
@@ -271,27 +302,18 @@ const paginationConfig = computed(() => ({
 }));
 
 const handleTableChange = (pagination, filters, sorter) => {
-  let sortField = props.filters?.sort_field || 'created_at';
-  let sortOrder = props.filters?.sort_order || 'desc';
+  // Update current page and page size
+  usersData.value.current_page = pagination.current;
+  usersData.value.per_page = pagination.pageSize;
 
   // Handle sorting
   if (sorter && sorter.column && sorter.order) {
-    sortField = sorter.field;
-    sortOrder = sorter.order === 'ascend' ? 'asc' : 'desc';
+    sortField.value = sorter.field;
+    sortOrder.value = sorter.order === 'ascend' ? 'asc' : 'desc';
   }
 
-  router.get('/users', {
-    page: pagination.current,
-    per_page: pagination.pageSize,
-    search: searchText.value,
-    sort_field: sortField,
-    sort_order: sortOrder,
-  }, {
-    preserveState: true,
-    preserveScroll: true,
-    onStart: () => loading.value = true,
-    onFinish: () => loading.value = false,
-  });
+  // Fetch users with new parameters
+  fetchUsers();
 };
 
 // Create Modal
@@ -311,24 +333,24 @@ const showEditDrawer = (record) => {
 };
 
 // Delete User
-const deleteUser = (id) => {
-  router.delete(`/users/${id}`, {
-    preserveState: true,
-    preserveScroll: true,
-    onSuccess: () => {
-      message.success('User deleted successfully!');
-    },
-    onError: (errors) => {
-      Object.keys(errors).forEach(key => {
-        message.error(errors[key]);
-      });
-    },
-  });
+const deleteUser = async (id) => {
+  try {
+    await userApi.delete(id);
+    message.success('User deleted successfully!');
+    fetchUsers();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message);
+    } else {
+      message.error('Failed to delete user');
+    }
+  }
 };
 
 // Success Handler
 const handleSuccess = () => {
-  // The page will automatically reload via Inertia
+  fetchUsers();
 };
 
 // Format Date
@@ -341,6 +363,11 @@ const formatDate = (dateString) => {
     day: 'numeric',
   });
 };
+
+// Load users on mount
+onMounted(() => {
+  fetchUsers();
+});
 </script>
 
 <style scoped>

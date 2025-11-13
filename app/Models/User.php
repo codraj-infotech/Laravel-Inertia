@@ -39,6 +39,40 @@ class User extends Authenticatable
     ];
 
     /**
+     * List of fields that are visible by default in API responses.
+     * Used by Froiden REST API package.
+     *
+     * @var array
+     */
+    protected $default = [
+        'id',
+        'name',
+        'email',
+        'profile_image',
+        'date_of_birth',
+        'gender',
+        'phone',
+        'address',
+        'created_at',
+        'updated_at'
+    ];
+
+    /**
+     * List of fields on which filters are allowed in API requests.
+     * Used by Froiden REST API package.
+     *
+     * @var array
+     */
+    protected $filterable = [
+        'id',
+        'name',
+        'email',
+        'gender',
+        'phone',
+        'created_at'
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

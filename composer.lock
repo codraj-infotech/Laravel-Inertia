@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e42fe1a7066e7a110e956ae26703d94",
+    "content-hash": "1765b5aa6505790051740cc859dcf6be",
     "packages": [
         {
             "name": "brick/math",
@@ -507,6 +507,51 @@
                 }
             ],
             "time": "2025-03-06T22:45:56+00:00"
+        },
+        {
+            "name": "froiden/laravel-rest-api",
+            "version": "12.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Froiden/laravel-rest-api.git",
+                "reference": "45e05076f8fc7918d70631369b02ed7168a6cb5d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Froiden/laravel-rest-api/zipball/45e05076f8fc7918d70631369b02ed7168a6cb5d",
+                "reference": "45e05076f8fc7918d70631369b02ed7168a6cb5d",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "5.6.*|5.7.*|5.8.*|6.*|7.*|8.*|9.*|10.*|^11.0|^12.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Froiden\\RestAPI\\": "src",
+                    "Froiden\\RestAPI\\Tests\\": "tests"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Shashank Jain",
+                    "email": "shashank@froiden.com"
+                },
+                {
+                    "name": "Ajay Kumar Choudhary",
+                    "email": "ajay@froiden.com"
+                }
+            ],
+            "description": "Powerful RestAPI plugin for Laravel framework",
+            "support": {
+                "issues": "https://github.com/Froiden/laravel-rest-api/issues",
+                "source": "https://github.com/Froiden/laravel-rest-api/tree/12.0.0"
+            },
+            "time": "2025-04-30T06:59:11+00:00"
         },
         {
             "name": "fruitcake/php-cors",
