@@ -28,7 +28,6 @@
             v-model:value="searchText"
             placeholder="Search by name or email..."
             style="width: 300px"
-            @search="handleSearch"
             allow-clear
           >
             <template #prefix>
@@ -65,7 +64,7 @@
 
             <template v-if="column.key === 'actions'">
               <a-space>
-                <a-button type="link" size="small" @click="showEditModal(record)">
+                <a-button type="link" size="small" @click="showEditDrawer(record)">
                   <template #icon>
                     <EditOutlined />
                   </template>
@@ -91,70 +90,33 @@
       </a-card>
     </div>
 
-    <!-- Create/Edit User Modal -->
-    <a-modal
-      v-model:open="modalVisible"
-      :title="isEditing ? 'Edit User' : 'Create New User'"
-      :confirm-loading="modalLoading"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
-      width="600px"
-    >
-      <a-form
-        ref="formRef"
-        :model="formState"
-        :rules="formRules"
-        layout="vertical"
-      >
-        <a-form-item label="Name" name="name">
-          <a-input v-model:value="formState.name" placeholder="Enter user name">
-            <template #prefix>
-              <UserOutlined />
-            </template>
-          </a-input>
-        </a-form-item>
+    <!-- Create User Modal -->
+    <UserCreate
+      v-model:visible="createModalVisible"
+      @success="handleSuccess"
+    />
 
-        <a-form-item label="Email" name="email">
-          <a-input v-model:value="formState.email" placeholder="Enter email address">
-            <template #prefix>
-              <MailOutlined />
-            </template>
-          </a-input>
-        </a-form-item>
-
-        <a-form-item :label="isEditing ? 'New Password (optional)' : 'Password'" name="password">
-          <a-input-password v-model:value="formState.password" :placeholder="isEditing ? 'Leave blank to keep current password' : 'Enter password'">
-            <template #prefix>
-              <LockOutlined />
-            </template>
-          </a-input-password>
-        </a-form-item>
-
-        <a-form-item label="Confirm Password" name="password_confirmation">
-          <a-input-password v-model:value="formState.password_confirmation" placeholder="Confirm password">
-            <template #prefix>
-              <LockOutlined />
-            </template>
-          </a-input-password>
-        </a-form-item>
-      </a-form>
-    </a-modal>
+    <!-- Edit User Drawer -->
+    <UserEdit
+      v-model:visible="editDrawerVisible"
+      :user="selectedUser"
+      @success="handleSuccess"
+    />
   </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import UserCreate from '@/Components/UserCreate.vue';
+import UserEdit from '@/Components/UserEdit.vue';
 import {
-  UserOutlined,
   HomeOutlined,
   PlusOutlined,
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  MailOutlined,
-  LockOutlined,
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 
@@ -204,11 +166,20 @@ const columns = [
   },
 ];
 
-// Search and filters
+// Search with debounce
 const searchText = ref(props.filters?.search || '');
 const loading = ref(false);
+let searchTimeout = null;
 
-const handleSearch = () => {
+// Watch for search text changes and debounce
+watch(searchText, (newValue) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    performSearch();
+  }, 500); // 500ms debounce
+});
+
+const performSearch = () => {
   router.get('/users', {
     search: searchText.value,
     page: 1,
@@ -257,111 +228,23 @@ const handleTableChange = (pagination, filters, sorter) => {
   });
 };
 
-// Modal and form
-const modalVisible = ref(false);
-const modalLoading = ref(false);
-const isEditing = ref(false);
-const formRef = ref();
-const formState = reactive({
-  id: null,
-  name: '',
-  email: '',
-  password: '',
-  password_confirmation: '',
-});
-
-const formRules = computed(() => ({
-  name: [
-    { required: true, message: 'Please input user name!', trigger: 'blur' },
-  ],
-  email: [
-    { required: true, message: 'Please input email!', trigger: 'blur' },
-    { type: 'email', message: 'Please enter a valid email!', trigger: 'blur' },
-  ],
-  password: [
-    { required: !isEditing.value, message: 'Please input password!', trigger: 'blur' },
-    { min: 8, message: 'Password must be at least 8 characters!', trigger: 'blur' },
-  ],
-  password_confirmation: [
-    { required: formState.password !== '', message: 'Please confirm password!', trigger: 'blur' },
-    {
-      validator: (rule, value) => {
-        if (value !== formState.password) {
-          return Promise.reject('Passwords do not match!');
-        }
-        return Promise.resolve();
-      },
-      trigger: 'blur',
-    },
-  ],
-}));
+// Create Modal
+const createModalVisible = ref(false);
 
 const showCreateModal = () => {
-  isEditing.value = false;
-  formState.id = null;
-  formState.name = '';
-  formState.email = '';
-  formState.password = '';
-  formState.password_confirmation = '';
-  modalVisible.value = true;
+  createModalVisible.value = true;
 };
 
-const showEditModal = (record) => {
-  isEditing.value = true;
-  formState.id = record.id;
-  formState.name = record.name;
-  formState.email = record.email;
-  formState.password = '';
-  formState.password_confirmation = '';
-  modalVisible.value = true;
+// Edit Drawer
+const editDrawerVisible = ref(false);
+const selectedUser = ref(null);
+
+const showEditDrawer = (record) => {
+  selectedUser.value = record;
+  editDrawerVisible.value = true;
 };
 
-const handleModalOk = async () => {
-  try {
-    await formRef.value.validate();
-    modalLoading.value = true;
-
-    const url = isEditing.value ? `/users/${formState.id}` : '/users';
-    const method = isEditing.value ? 'put' : 'post';
-
-    router[method](url, formState, {
-      preserveState: true,
-      preserveScroll: true,
-      onSuccess: () => {
-        message.success(isEditing.value ? 'User updated successfully!' : 'User created successfully!');
-        modalVisible.value = false;
-        resetForm();
-      },
-      onError: (errors) => {
-        Object.keys(errors).forEach(key => {
-          message.error(errors[key]);
-        });
-      },
-      onFinish: () => {
-        modalLoading.value = false;
-      },
-    });
-  } catch (error) {
-    console.log('Validation failed:', error);
-  }
-};
-
-const handleModalCancel = () => {
-  modalVisible.value = false;
-  resetForm();
-};
-
-const resetForm = () => {
-  formState.id = null;
-  formState.name = '';
-  formState.email = '';
-  formState.password = '';
-  formState.password_confirmation = '';
-  if (formRef.value) {
-    formRef.value.clearValidate();
-  }
-};
-
+// Delete User
 const deleteUser = (id) => {
   router.delete(`/users/${id}`, {
     preserveState: true,
@@ -377,6 +260,12 @@ const deleteUser = (id) => {
   });
 };
 
+// Success Handler
+const handleSuccess = () => {
+  // The page will automatically reload via Inertia
+};
+
+// Format Date
 const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
