@@ -13,13 +13,24 @@ use Illuminate\Validation\Rules;
 class UserController extends Controller
 {
     /**
-     * Display a listing of users with search and pagination.
+     * Display a listing of users with search, sorting, and pagination.
      */
     public function index(Request $request): Response
     {
         $search = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Validate sort field to prevent SQL injection
+        $allowedSortFields = ['name', 'email', 'created_at'];
+        if (!in_array($sortField, $allowedSortFields)) {
+            $sortField = 'created_at';
+        }
+
+        // Validate sort order
+        $sortOrder = strtolower($sortOrder) === 'asc' ? 'asc' : 'desc';
 
         $query = User::query();
 
@@ -31,7 +42,8 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')
+        // Apply sorting
+        $users = $query->orderBy($sortField, $sortOrder)
                        ->paginate($perPage, ['*'], 'page', $page);
 
         return Inertia::render('Users/Index', [
@@ -44,6 +56,8 @@ class UserController extends Controller
             ],
             'filters' => [
                 'search' => $search,
+                'sort_field' => $sortField,
+                'sort_order' => $sortOrder,
             ],
         ]);
     }
