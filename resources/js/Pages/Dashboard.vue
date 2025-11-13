@@ -72,7 +72,7 @@
     </a-layout-sider>
 
     <!-- Right Side Layout -->
-    <a-layout>
+    <a-layout :style="{ marginLeft: collapsed ? '80px' : '250px' }" class="main-layout">
       <!-- Header -->
       <a-layout-header class="header">
         <div class="header-left">
@@ -512,6 +512,12 @@ onMounted(() => {
 
   .sidebar {
     position: fixed !important;
+    z-index: 1002;
+  }
+
+  /* Add overlay backdrop when sidebar is open on mobile */
+  :deep(.ant-layout-sider-collapsed) {
+    transform: translateX(-100%);
   }
 }
 
@@ -537,6 +543,11 @@ onMounted(() => {
   }
 }
 
+/* Main Layout - Right side content */
+.main-layout {
+  transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Ant Design Layout adjustments */
 :deep(.ant-layout) {
   background: #f0f2f5;
@@ -545,5 +556,12 @@ onMounted(() => {
 :deep(.ant-layout-sider-children) {
   display: flex;
   flex-direction: column;
+}
+
+/* Responsive - Remove margin on mobile when sidebar is overlay */
+@media (max-width: 991px) {
+  .main-layout {
+    margin-left: 0 !important;
+  }
 }
 </style>
