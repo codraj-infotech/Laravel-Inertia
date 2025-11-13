@@ -45,17 +45,53 @@
           @change="handleTableChange"
           row-key="id"
           class="users-table"
+          :scroll="{ x: 1200 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'name'">
-              <a-avatar :style="{ backgroundColor: getAvatarColor(record.name), marginRight: '8px' }">
-                {{ getUserInitials(record.name) }}
-              </a-avatar>
-              <span>{{ record.name }}</span>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <a-avatar
+                  v-if="record.profile_image"
+                  :src="record.profile_image"
+                  :size="40"
+                />
+                <a-avatar
+                  v-else
+                  :style="{ backgroundColor: getAvatarColor(record.name) }"
+                  :size="40"
+                >
+                  {{ getUserInitials(record.name) }}
+                </a-avatar>
+                <div>
+                  <div style="font-weight: 500;">{{ record.name }}</div>
+                  <div style="font-size: 12px; color: #8c8c8c;">ID: {{ record.id }}</div>
+                </div>
+              </div>
             </template>
 
-            <template v-if="column.key === 'email'">
-              <a-tag color="blue">{{ record.email }}</a-tag>
+            <template v-if="column.key === 'contact'">
+              <div>
+                <div style="margin-bottom: 4px;">
+                  <MailOutlined style="margin-right: 6px; color: #1890ff;" />
+                  <span>{{ record.email }}</span>
+                </div>
+                <div v-if="record.phone" style="font-size: 12px; color: #8c8c8c;">
+                  <PhoneOutlined style="margin-right: 6px;" />
+                  <span>{{ record.phone }}</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="column.key === 'gender'">
+              <a-tag v-if="record.gender" :color="getGenderColor(record.gender)">
+                {{ capitalizeFirst(record.gender) }}
+              </a-tag>
+              <span v-else style="color: #8c8c8c;">-</span>
+            </template>
+
+            <template v-if="column.key === 'date_of_birth'">
+              <span v-if="record.date_of_birth">{{ formatDate(record.date_of_birth) }}</span>
+              <span v-else style="color: #8c8c8c;">-</span>
             </template>
 
             <template v-if="column.key === 'created_at'">
@@ -109,14 +145,16 @@
 import { ref, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import UserCreate from '@/Components/UserCreate.vue';
-import UserEdit from '@/Components/UserEdit.vue';
+import UserCreate from './UserCreate.vue';
+import UserEdit from './UserEdit.vue';
 import {
   HomeOutlined,
   PlusOutlined,
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
+  MailOutlined,
+  PhoneOutlined,
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 
@@ -139,30 +177,58 @@ const getAvatarColor = (name) => {
   return colors[index];
 };
 
+const getGenderColor = (gender) => {
+  const colors = {
+    male: 'blue',
+    female: 'pink',
+    other: 'purple',
+  };
+  return colors[gender] || 'default';
+};
+
+const capitalizeFirst = (str) => {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 // Table columns
 const columns = [
   {
-    title: 'Name',
+    title: 'User',
     dataIndex: 'name',
     key: 'name',
     sorter: true,
+    width: 250,
   },
   {
-    title: 'Email',
-    dataIndex: 'email',
-    key: 'email',
-    sorter: true,
+    title: 'Contact',
+    key: 'contact',
+    width: 280,
+  },
+  {
+    title: 'Gender',
+    dataIndex: 'gender',
+    key: 'gender',
+    width: 100,
+  },
+  {
+    title: 'Date of Birth',
+    dataIndex: 'date_of_birth',
+    key: 'date_of_birth',
+    width: 150,
   },
   {
     title: 'Created At',
     dataIndex: 'created_at',
     key: 'created_at',
     sorter: true,
+    width: 150,
   },
   {
     title: 'Actions',
     key: 'actions',
-    width: 200,
+    width: 180,
+    fixed: 'right',
   },
 ];
 

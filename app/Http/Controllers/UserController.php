@@ -38,7 +38,8 @@ class UserController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -71,12 +72,22 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'profile_image' => ['nullable', 'string', 'max:500'],
+            'date_of_birth' => ['nullable', 'date'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:1000'],
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'profile_image' => $validated['profile_image'] ?? null,
+            'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'gender' => $validated['gender'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
         ]);
 
         return redirect()->route('users.index')
@@ -92,10 +103,20 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'profile_image' => ['nullable', 'string', 'max:500'],
+            'date_of_birth' => ['nullable', 'date'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->profile_image = $validated['profile_image'] ?? null;
+        $user->date_of_birth = $validated['date_of_birth'] ?? null;
+        $user->gender = $validated['gender'] ?? null;
+        $user->phone = $validated['phone'] ?? null;
+        $user->address = $validated['address'] ?? null;
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
