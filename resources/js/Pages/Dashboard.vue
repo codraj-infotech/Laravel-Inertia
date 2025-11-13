@@ -264,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import {
   AppstoreOutlined,
@@ -289,8 +289,24 @@ import {
 const page = usePage();
 const user = computed(() => page.props.auth?.user || { name: 'User', email: 'user@example.com' });
 
-const collapsed = ref(false);
+// Initialize collapsed state from localStorage
+const getInitialCollapsedState = () => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('sidebar-collapsed');
+    return stored ? JSON.parse(stored) : false;
+  }
+  return false;
+};
+
+const collapsed = ref(getInitialCollapsedState());
 const selectedKeys = ref(['dashboard']);
+
+// Save collapsed state to localStorage whenever it changes
+watch(collapsed, (newValue) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(newValue));
+  }
+});
 
 const toggleCollapsed = () => {
   collapsed.value = !collapsed.value;
@@ -310,6 +326,11 @@ const getUserInitials = (name) => {
 const logout = () => {
   router.post('/logout');
 };
+
+onMounted(() => {
+  // Ensure collapsed state is loaded on mount
+  collapsed.value = getInitialCollapsedState();
+});
 </script>
 
 <style scoped>
@@ -324,6 +345,7 @@ const logout = () => {
   top: 0;
   bottom: 0;
   z-index: 1001;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo {
@@ -337,20 +359,37 @@ const logout = () => {
   color: #fff;
   font-size: 18px;
   font-weight: 600;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo-icon {
   font-size: 28px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo-text {
   white-space: nowrap;
   overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-menu {
   margin-top: 8px;
+}
+
+/* Smooth transitions for Ant Design components */
+:deep(.ant-layout-sider) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:deep(.ant-menu-item),
+:deep(.ant-menu-submenu) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:deep(.ant-menu-item-icon) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Header Styles */
@@ -375,7 +414,7 @@ const logout = () => {
   font-size: 20px;
   padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -385,6 +424,11 @@ const logout = () => {
 .trigger:hover {
   color: #667eea;
   background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.05);
+}
+
+.trigger:active {
+  transform: scale(0.95);
 }
 
 .header-right {
@@ -410,6 +454,7 @@ const logout = () => {
   padding: 0;
   background: #f0f2f5;
   min-height: calc(100vh - 64px - 70px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .page-header {
