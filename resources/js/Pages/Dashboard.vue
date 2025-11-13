@@ -21,14 +21,14 @@
         mode="inline"
         class="sidebar-menu"
       >
-        <a-menu-item key="dashboard">
+        <a-menu-item key="dashboard" @click="navigateTo('/dashboard')">
           <template #icon>
             <DashboardOutlined />
           </template>
           <span>Dashboard</span>
         </a-menu-item>
 
-        <a-menu-item key="users">
+        <a-menu-item key="users" @click="navigateTo('/users')">
           <template #icon>
             <UserOutlined />
           </template>
@@ -325,6 +325,10 @@ const getUserInitials = (name) => {
 
 const logout = () => {
   router.post('/logout');
+};
+
+const navigateTo = (url) => {
+  router.visit(url);
 };
 
 onMounted(() => {
