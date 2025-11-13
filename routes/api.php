@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserApiController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,12 +19,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// User API Routes using Froiden REST API
+// User API Routes - integrated with UserController
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('users', [UserApiController::class, 'index']);
-    Route::post('users', [UserApiController::class, 'store']);
-    Route::get('users/{id}', [UserApiController::class, 'show']);
-    Route::put('users/{id}', [UserApiController::class, 'update']);
-    Route::patch('users/{id}', [UserApiController::class, 'update']);
-    Route::delete('users/{id}', [UserApiController::class, 'destroy']);
+    Route::get('users', [UserController::class, 'apiIndex']);
+    Route::post('users', [UserController::class, 'store']);
+    Route::get('users/{id}', [UserController::class, 'show']);
+    Route::put('users/{id}', [UserController::class, 'update']);
+    Route::patch('users/{id}', [UserController::class, 'update']);
+    Route::delete('users/{id}', [UserController::class, 'destroy']);
 });

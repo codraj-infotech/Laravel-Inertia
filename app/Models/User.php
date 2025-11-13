@@ -44,7 +44,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $default = [
+    public $default = [
         'id',
         'name',
         'email',
@@ -63,7 +63,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $filterable = [
+    public $filterable = [
         'id',
         'name',
         'email',
